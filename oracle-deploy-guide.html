@@ -1,0 +1,1041 @@
+<!doctype html>
+<html lang="en" class="h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8" />
+  <title>Deploy Skin Analysis App to Oracle Cloud</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+    
+    .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); }
+    .glow-emerald { box-shadow: 0 0 20px rgba(16, 185, 129, 0.15); }
+    .glow-border { border: 1px solid rgba(16, 185, 129, 0.2); }
+    
+    .nav-link { transition: all 0.2s ease; }
+    .nav-link:hover { transform: translateX(4px); }
+    .nav-link.active { background: linear-gradient(90deg, rgba(16, 185, 129, 0.15), transparent); border-left: 2px solid #10b981; }
+    
+    .code-block { position: relative; }
+    .code-block::before { 
+      content: ''; 
+      position: absolute; 
+      top: 0; left: 0; right: 0; 
+      height: 3px; 
+      background: linear-gradient(90deg, #10b981, #06b6d4); 
+      border-radius: 8px 8px 0 0;
+    }
+    
+    .section-card { 
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.8));
+      border: 1px solid rgba(71, 85, 105, 0.3);
+      transition: all 0.3s ease;
+    }
+    .section-card:hover { 
+      border-color: rgba(16, 185, 129, 0.3);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .status-badge { animation: pulse-glow 2s infinite; }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 5px rgba(16, 185, 129, 0.5); }
+      50% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.8); }
+    }
+    
+    .floating-toc {
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
+    }
+    .floating-toc::-webkit-scrollbar { width: 4px; }
+    .floating-toc::-webkit-scrollbar-track { background: transparent; }
+    .floating-toc::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    
+    table { border-collapse: separate; border-spacing: 0; }
+    th, td { border-bottom: 1px solid rgba(71, 85, 105, 0.4); }
+    tr:hover td { background: rgba(16, 185, 129, 0.05); }
+  </style>
+</head>
+<body class="h-full antialiased">
+  <div class="min-h-screen flex flex-col">
+    <!-- Top Nav -->
+    <header class="sticky top-0 z-50 glass border-b border-slate-800/50">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="relative">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 text-emerald-400 text-sm font-bold glow-emerald">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </span>
+          </div>
+          <div>
+            <h1 class="text-base font-semibold text-white">
+              Skin Analysis App - Oracle Cloud Deployment
+            </h1>
+            <p class="text-xs text-slate-400 flex items-center gap-2">
+              <span>Last Updated: January 11, 2026</span>
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-medium status-badge">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                Guide
+              </span>
+            </p>
+          </div>
+        </div>
+        <div class="hidden md:flex items-center gap-2">
+          <span class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/50 text-xs text-slate-300 flex items-center gap-2">
+            <svg class="w-3.5 h-3.5 text-blue-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            FastAPI + YOLO
+          </span>
+          <span class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/50 text-xs text-slate-300 flex items-center gap-2">
+            <svg class="w-3.5 h-3.5 text-orange-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            Oracle Linux 9
+          </span>
+          <span class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/50 text-xs font-mono text-emerald-400 flex items-center gap-2">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+            Port 8000
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 flex gap-8">
+        <!-- Sidebar -->
+        <aside class="hidden lg:block w-64 shrink-0">
+          <div class="sticky top-24 floating-toc">
+            <div class="section-card rounded-2xl p-4">
+              <p class="text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-4 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                Contents
+              </p>
+              <nav class="text-sm space-y-1">
+                <a href="#prerequisites" class="nav-link block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50">
+                  <span class="text-emerald-500/70 mr-2">01</span> Prerequisites
+                </a>
+                <a href="#project-structure" class="nav-link block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50">
+                  <span class="text-emerald-500/70 mr-2">02</span> Project Structure
+                </a>
+                <a href="#create-instance" class="nav-link block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50">
+                  <span class="text-emerald-500/70 mr-2">03</span> Create Instance
+                </a>
+                <a href="#configure-security" class="nav-link block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50">
+                  <span class="text-emerald-500/70 mr-2">04</span> Configure Security
+                </a>
+                <a href="#connect-ssh" class="nav-link block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50">
+                  <span class="text-emerald-500/70 mr-2">05</span> Connect via SSH
+                </a>
+                <a href="#install-dependencies" class="nav-link block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50">
+                  <span class="text-emerald-500/70 mr-2">06</span> Install Dependencies
+                </a>
+                <a href="#upload-project" class="nav-link block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50">
+                  <span class="text-emerald-500/70 mr-2">07</span> Upload Project
+                </a>
+                <a href="#setup-python" class="nav-link block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50">
+                  <span class="text-emerald-500/70 mr-2">08</span> Setup Python Env
+                </a>
+                <a href="#configure-firewall" class="nav-link block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50">
+                  <span class="text-emerald-500/70 mr-2">09</span> Configure Firewall
+                </a>
+                <a href="#run-application" class="nav-link block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50">
+                  <span class="text-emerald-500/70 mr-2">10</span> Run Application
+                </a>
+                <a href="#systemd-service" class="nav-link block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50">
+                  <span class="text-emerald-500/70 mr-2">11</span> Systemd Service
+                </a>
+                <a href="#verify-deployment" class="nav-link block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50">
+                  <span class="text-emerald-500/70 mr-2">12</span> Verify Deployment
+                </a>
+                <a href="#troubleshooting" class="nav-link block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50">
+                  <span class="text-emerald-500/70 mr-2">13</span> Troubleshooting
+                </a>
+                <a href="#production-tips" class="nav-link block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50">
+                  <span class="text-emerald-500/70 mr-2">14</span> Production Tips
+                </a>
+              </nav>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main Doc -->
+        <section class="flex-1 min-w-0">
+          <article class="space-y-8">
+            <!-- Hero Section -->
+            <div class="section-card rounded-2xl p-8 glow-border">
+              <div class="flex items-start justify-between">
+                <div>
+                  <h1 class="text-3xl font-bold text-white mb-3 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                    Deploy Skin Analysis App to Oracle Cloud
+                  </h1>
+                  <p class="text-slate-400 max-w-2xl">
+                    Complete step-by-step guide to deploy your FastAPI + YOLO skin analysis application to Oracle Cloud Infrastructure. Includes Python environment setup, model deployment, and production configuration.
+                  </p>
+                </div>
+                <div class="hidden sm:block">
+                  <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/20 flex items-center justify-center">
+                    <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Prerequisites -->
+            <div id="prerequisites" class="section-card rounded-2xl p-6 scroll-mt-24">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm font-bold">1</span>
+                <h2 class="text-xl font-semibold text-white">Prerequisites</h2>
+              </div>
+              
+              <h3 class="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
+                <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                What You Need
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                  <span class="text-emerald-400">✓</span>
+                  <span class="text-slate-300 text-sm">Oracle Cloud Account (Free Tier works)</span>
+                </div>
+                <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                  <span class="text-emerald-400">✓</span>
+                  <span class="text-slate-300 text-sm">SSH Client (Windows: PowerShell/PuTTY)</span>
+                </div>
+                <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                  <span class="text-emerald-400">✓</span>
+                  <span class="text-slate-300 text-sm">SCP/SFTP Client (WinSCP, FileZilla)</span>
+                </div>
+                <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                  <span class="text-emerald-400">✓</span>
+                  <span class="text-slate-300 text-sm">Your Skin Analysis Project Files</span>
+                </div>
+              </div>
+
+              <div class="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
+                <h4 class="text-sm font-medium text-amber-400 mb-2 flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                  Important Note
+                </h4>
+                <p class="text-sm text-slate-400">YOLO models require significant RAM. For Free Tier, use <span class="text-cyan-400">VM.Standard.E2.1.Micro</span> (1GB RAM) but consider upgrading for better performance with multiple models.</p>
+              </div>
+            </div>
+
+            <!-- Project Structure -->
+            <div id="project-structure" class="section-card rounded-2xl p-6 scroll-mt-24">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm font-bold">2</span>
+                <h2 class="text-xl font-semibold text-white">Project Structure</h2>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Files to Upload</h3>
+              <div class="code-block rounded-xl bg-slate-900 border border-slate-800 overflow-hidden mb-6">
+                <div class="flex items-center justify-between px-4 py-2 bg-slate-800/50 border-b border-slate-700/50">
+                  <span class="text-xs text-slate-400">Project Structure</span>
+                </div>
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-slate-300">skin-analysis/
+├── <span class="text-emerald-400">app.py</span>                  <span class="text-slate-500"># FastAPI application</span>
+├── <span class="text-cyan-400">requirements.txt</span>        <span class="text-slate-500"># Python dependencies</span>
+├── <span class="text-amber-400">models/</span>                 <span class="text-slate-500"># YOLO model files</span>
+│   ├── acne.pt
+│   ├── acne_scars.pt
+│   ├── dark_circles.pt
+│   ├── eyebags.pt
+│   └── wrinkles.pt
+├── <span class="text-purple-400">static/</span>                 <span class="text-slate-500"># Frontend files</span>
+│   ├── index.html
+│   ├── css/style.css
+│   └── js/app.js
+└── <span class="text-blue-400">uploads/</span>                <span class="text-slate-500"># User uploads (auto-created)</span></code></pre>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Application Details</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                  <span class="text-slate-500 text-sm">Framework</span>
+                  <span class="ml-auto font-mono text-emerald-400">FastAPI</span>
+                </div>
+                <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                  <span class="text-slate-500 text-sm">Server</span>
+                  <span class="ml-auto font-mono text-cyan-400">Uvicorn</span>
+                </div>
+                <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                  <span class="text-slate-500 text-sm">ML Framework</span>
+                  <span class="ml-auto font-mono text-amber-400">Ultralytics YOLO</span>
+                </div>
+                <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                  <span class="text-slate-500 text-sm">Default Port</span>
+                  <span class="ml-auto font-mono text-purple-400">8000</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Create Instance -->
+            <div id="create-instance" class="section-card rounded-2xl p-6 scroll-mt-24">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm font-bold">3</span>
+                <h2 class="text-xl font-semibold text-white">Create Oracle Cloud Instance</h2>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Step 1: Navigate to Compute</h3>
+              <div class="flex flex-wrap gap-2 mb-6">
+                <span class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-300">Oracle Cloud Console</span>
+                <span class="text-slate-600">→</span>
+                <span class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-300">Compute</span>
+                <span class="text-slate-600">→</span>
+                <span class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-300">Instances</span>
+                <span class="text-slate-600">→</span>
+                <span class="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-sm text-emerald-400">Create Instance</span>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Recommended Instance Configuration</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                  <span class="text-slate-500 text-sm">Name</span>
+                  <span class="ml-auto font-mono text-emerald-400">skin-analysis-app</span>
+                </div>
+                <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                  <span class="text-slate-500 text-sm">Image</span>
+                  <span class="ml-auto text-slate-300">Oracle Linux 9</span>
+                </div>
+                <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                  <span class="text-slate-500 text-sm">Shape (Free)</span>
+                  <span class="ml-auto font-mono text-xs text-cyan-400">VM.Standard.E2.1.Micro</span>
+                </div>
+                <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                  <span class="text-slate-500 text-sm">Shape (Recommended)</span>
+                  <span class="ml-auto font-mono text-xs text-amber-400">VM.Standard.A1.Flex (4GB+)</span>
+                </div>
+              </div>
+
+              <div class="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20">
+                <h4 class="text-sm font-medium text-blue-400 mb-2 flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  SSH Key Setup
+                </h4>
+                <ul class="text-sm text-slate-400 space-y-1">
+                  <li class="flex items-start gap-2"><span class="text-blue-500">•</span> Select "Generate a key pair for me" or upload your public key</li>
+                  <li class="flex items-start gap-2"><span class="text-blue-500">•</span> <span class="text-amber-400">Download and save the private key</span> - you cannot download it again!</li>
+                  <li class="flex items-start gap-2"><span class="text-blue-500">•</span> Store the key in a secure location (e.g., <code class="px-1 rounded bg-slate-800 text-emerald-400">C:\orc\skin-app\</code>)</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Configure Security -->
+            <div id="configure-security" class="section-card rounded-2xl p-6 scroll-mt-24">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm font-bold">4</span>
+                <h2 class="text-xl font-semibold text-white">Configure Security List</h2>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Navigate to Security List</h3>
+              <div class="flex flex-wrap gap-2 mb-6">
+                <span class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-300">Networking</span>
+                <span class="text-slate-600">→</span>
+                <span class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-300">Virtual Cloud Networks</span>
+                <span class="text-slate-600">→</span>
+                <span class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-300">[Your VCN]</span>
+                <span class="text-slate-600">→</span>
+                <span class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-300">Security Lists</span>
+                <span class="text-slate-600">→</span>
+                <span class="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-sm text-emerald-400">Add Ingress Rules</span>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Add Ingress Rule for Port 8000</h3>
+              <div class="p-4 rounded-xl bg-slate-800/30 border border-slate-700/50 mb-6">
+                <h4 class="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
+                  <span class="w-6 h-6 rounded bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xs">+</span>
+                  Add FastAPI Port (8000)
+                </h4>
+                <ul class="text-sm text-slate-400 space-y-2">
+                  <li class="flex items-center gap-2"><span class="text-slate-600">Source Type:</span> <code class="px-2 py-0.5 rounded bg-slate-900 text-cyan-400">CIDR</code></li>
+                  <li class="flex items-center gap-2"><span class="text-slate-600">Source CIDR:</span> <code class="px-2 py-0.5 rounded bg-slate-900 text-emerald-400">0.0.0.0/0</code></li>
+                  <li class="flex items-center gap-2"><span class="text-slate-600">IP Protocol:</span> <code class="px-2 py-0.5 rounded bg-slate-900 text-cyan-400">TCP</code></li>
+                  <li class="flex items-center gap-2"><span class="text-slate-600">Destination Port:</span> <code class="px-2 py-0.5 rounded bg-slate-900 text-amber-400">8000</code></li>
+                  <li class="flex items-center gap-2"><span class="text-slate-600">Description:</span> <code class="px-2 py-0.5 rounded bg-slate-900 text-slate-300">FastAPI Skin Analysis App</code></li>
+                </ul>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Required Ingress Rules</h3>
+              <div class="overflow-x-auto rounded-xl border border-slate-700/50">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="bg-slate-800/50">
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Source</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Protocol</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Port</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Purpose</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-700/30">
+                    <tr><td class="px-4 py-3 font-mono text-slate-300">0.0.0.0/0</td><td class="px-4 py-3 text-cyan-400">TCP</td><td class="px-4 py-3 text-amber-400">22</td><td class="px-4 py-3 text-slate-400">SSH Access</td></tr>
+                    <tr><td class="px-4 py-3 font-mono text-slate-300">0.0.0.0/0</td><td class="px-4 py-3 text-cyan-400">TCP</td><td class="px-4 py-3 text-amber-400">8000</td><td class="px-4 py-3 text-slate-400">FastAPI App</td></tr>
+                    <tr><td class="px-4 py-3 font-mono text-slate-300">0.0.0.0/0</td><td class="px-4 py-3 text-cyan-400">TCP</td><td class="px-4 py-3 text-amber-400">80</td><td class="px-4 py-3 text-slate-400">HTTP (Optional)</td></tr>
+                    <tr><td class="px-4 py-3 font-mono text-slate-300">0.0.0.0/0</td><td class="px-4 py-3 text-cyan-400">TCP</td><td class="px-4 py-3 text-amber-400">443</td><td class="px-4 py-3 text-slate-400">HTTPS (Optional)</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>""
+
+            <!-- Connect SSH -->
+            <div id="connect-ssh" class="section-card rounded-2xl p-6 scroll-mt-24">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm font-bold">5</span>
+                <h2 class="text-xl font-semibold text-white">Connect via SSH</h2>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Get Your Instance Public IP</h3>
+              <div class="flex flex-wrap gap-2 mb-6">
+                <span class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-300">Compute</span>
+                <span class="text-slate-600">→</span>
+                <span class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-300">Instances</span>
+                <span class="text-slate-600">→</span>
+                <span class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-300">[Your Instance]</span>
+                <span class="text-slate-600">→</span>
+                <span class="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-sm text-emerald-400">Public IP Address</span>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Windows PowerShell Commands</h3>
+              <div class="code-block rounded-xl bg-slate-900 border border-slate-800 overflow-hidden mb-6">
+                <div class="flex items-center justify-between px-4 py-2 bg-slate-800/50 border-b border-slate-700/50">
+                  <span class="text-xs text-slate-400 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    PowerShell
+                  </span>
+                </div>
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-slate-300"><span class="text-slate-500"># Step 1: Navigate to your SSH key directory</span>
+<span class="text-cyan-400">cd</span> C:\orc\skin-app
+
+<span class="text-slate-500"># Step 2: Fix SSH key permissions (required on Windows)</span>
+<span class="text-cyan-400">icacls</span> <span class="text-amber-300">"ssh_prv.key"</span> /inheritance:d /grant:r <span class="text-emerald-400">"$($env:USERNAME):(F)"</span>
+
+<span class="text-slate-500"># Step 3: Connect to your instance</span>
+<span class="text-cyan-400">ssh</span> -o IdentitiesOnly=yes -i ssh_prv.key <span class="text-emerald-400">opc@YOUR_PUBLIC_IP</span></code></pre>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Connection Details</h3>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50 text-center">
+                  <span class="text-slate-500 text-xs block mb-1">Username</span>
+                  <span class="font-mono text-emerald-400">opc</span>
+                </div>
+                <div class="px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50 text-center">
+                  <span class="text-slate-500 text-xs block mb-1">Port</span>
+                  <span class="font-mono text-slate-300">22</span>
+                </div>
+                <div class="px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50 text-center">
+                  <span class="text-slate-500 text-xs block mb-1">Key File</span>
+                  <span class="font-mono text-amber-400 text-sm">ssh_prv.key</span>
+                </div>
+                <div class="px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50 text-center">
+                  <span class="text-slate-500 text-xs block mb-1">Sudo Access</span>
+                  <span class="font-mono text-emerald-400">Yes</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Install Dependencies -->
+            <div id="install-dependencies" class="section-card rounded-2xl p-6 scroll-mt-24">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm font-bold">6</span>
+                <h2 class="text-xl font-semibold text-white">Install System Dependencies</h2>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Run on Oracle Linux Instance</h3>
+              <div class="code-block rounded-xl bg-slate-900 border border-slate-800 overflow-hidden mb-6">
+                <div class="flex items-center justify-between px-4 py-2 bg-slate-800/50 border-b border-slate-700/50">
+                  <span class="text-xs text-slate-400 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    Bash (on Oracle Linux)
+                  </span>
+                </div>
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-slate-300"><span class="text-slate-500"># Update system packages</span>
+<span class="text-cyan-400">sudo</span> dnf update -y
+
+<span class="text-slate-500"># Install Python 3.11 and development tools</span>
+<span class="text-cyan-400">sudo</span> dnf install -y python3.11 python3.11-pip python3.11-devel
+
+<span class="text-slate-500"># Install OpenCV dependencies</span>
+<span class="text-cyan-400">sudo</span> dnf install -y mesa-libGL mesa-libGL-devel
+
+<span class="text-slate-500"># Install additional libraries for image processing</span>
+<span class="text-cyan-400">sudo</span> dnf install -y libXext libSM libXrender
+
+<span class="text-slate-500"># Verify Python installation</span>
+<span class="text-cyan-400">python3.11</span> --version
+<span class="text-cyan-400">pip3.11</span> --version</code></pre>
+              </div>
+
+              <div class="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                <h4 class="text-sm font-medium text-emerald-400 mb-2">Expected Output</h4>
+                <code class="text-sm text-slate-300 font-mono">Python 3.11.x</code><br>
+                <code class="text-sm text-slate-300 font-mono">pip 23.x.x from /usr/lib/python3.11/site-packages/pip</code>
+              </div>
+            </div>
+
+            <!-- Upload Project -->
+            <div id="upload-project" class="section-card rounded-2xl p-6 scroll-mt-24">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm font-bold">7</span>
+                <h2 class="text-xl font-semibold text-white">Upload Project Files</h2>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                <div class="p-4 rounded-xl bg-emerald-500/5 border-2 border-emerald-500/30">
+                  <div class="flex items-center gap-2 mb-3">
+                    <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-xs font-medium">OPTION 1</span>
+                    <h4 class="text-sm font-medium text-white">Using SCP (Command Line)</h4>
+                  </div>
+                  <div class="code-block rounded-lg bg-slate-900 border border-slate-800 overflow-hidden">
+                    <pre class="p-3 text-xs overflow-x-auto"><code class="text-slate-300"><span class="text-slate-500"># From Windows PowerShell</span>
+<span class="text-cyan-400">scp</span> -i C:\orc\skin-app\ssh_prv.key -r ^
+  C:\path\to\skin-analysis ^
+  <span class="text-emerald-400">opc@YOUR_IP</span>:/home/opc/</code></pre>
+                  </div>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
+                  <div class="flex items-center gap-2 mb-3">
+                    <span class="px-2 py-0.5 rounded bg-slate-700 text-slate-400 text-xs font-medium">OPTION 2</span>
+                    <h4 class="text-sm font-medium text-slate-300">Using WinSCP/FileZilla</h4>
+                  </div>
+                  <ul class="text-sm text-slate-400 space-y-1">
+                    <li>• Host: <code class="px-1 rounded bg-slate-900 text-cyan-400">YOUR_PUBLIC_IP</code></li>
+                    <li>• Username: <code class="px-1 rounded bg-slate-900 text-emerald-400">opc</code></li>
+                    <li>• Key File: <code class="px-1 rounded bg-slate-900 text-amber-400">ssh_prv.key</code></li>
+                    <li>• Upload to: <code class="px-1 rounded bg-slate-900 text-slate-300">/home/opc/skin-analysis</code></li>
+                  </ul>
+                </div>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Create Project Directory on Server</h3>
+              <div class="code-block rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
+                <div class="flex items-center justify-between px-4 py-2 bg-slate-800/50 border-b border-slate-700/50">
+                  <span class="text-xs text-slate-400">Bash (on Oracle Linux)</span>
+                </div>
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-slate-300"><span class="text-slate-500"># Create project directory</span>
+<span class="text-cyan-400">mkdir</span> -p /home/opc/skin-analysis
+<span class="text-cyan-400">cd</span> /home/opc/skin-analysis
+
+<span class="text-slate-500"># Create uploads directory</span>
+<span class="text-cyan-400">mkdir</span> -p uploads
+
+<span class="text-slate-500"># Verify files after upload</span>
+<span class="text-cyan-400">ls</span> -la</code></pre>
+              </div>
+            </div>
+
+            <!-- Setup Python -->
+            <div id="setup-python" class="section-card rounded-2xl p-6 scroll-mt-24">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm font-bold">8</span>
+                <h2 class="text-xl font-semibold text-white">Setup Python Environment</h2>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Create Virtual Environment & Install Dependencies</h3>
+              <div class="code-block rounded-xl bg-slate-900 border border-slate-800 overflow-hidden mb-6">
+                <div class="flex items-center justify-between px-4 py-2 bg-slate-800/50 border-b border-slate-700/50">
+                  <span class="text-xs text-slate-400 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    Bash (on Oracle Linux)
+                  </span>
+                </div>
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-slate-300"><span class="text-slate-500"># Navigate to project directory</span>
+<span class="text-cyan-400">cd</span> /home/opc/skin-analysis
+
+<span class="text-slate-500"># Create virtual environment</span>
+<span class="text-cyan-400">python3.11</span> -m venv venv
+
+<span class="text-slate-500"># Activate virtual environment</span>
+<span class="text-cyan-400">source</span> venv/bin/activate
+
+<span class="text-slate-500"># Upgrade pip</span>
+<span class="text-cyan-400">pip</span> install --upgrade pip
+
+<span class="text-slate-500"># Install project dependencies</span>
+<span class="text-cyan-400">pip</span> install -r requirements.txt
+
+<span class="text-slate-500"># Verify installation</span>
+<span class="text-cyan-400">pip</span> list | grep -E "fastapi|uvicorn|ultralytics"</code></pre>
+              </div>
+
+              <div class="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 mb-6">
+                <h4 class="text-sm font-medium text-amber-400 mb-2 flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                  Low Memory Warning
+                </h4>
+                <p class="text-sm text-slate-400">If using Free Tier (1GB RAM), installation may be slow. Consider adding swap space:</p>
+                <div class="code-block rounded-lg bg-slate-900 border border-slate-800 overflow-hidden mt-3">
+                  <pre class="p-3 text-xs overflow-x-auto"><code class="text-slate-300"><span class="text-cyan-400">sudo</span> dd if=/dev/zero of=/swapfile bs=1M count=2048
+<span class="text-cyan-400">sudo</span> chmod 600 /swapfile
+<span class="text-cyan-400">sudo</span> mkswap /swapfile
+<span class="text-cyan-400">sudo</span> swapon /swapfile</code></pre>
+                </div>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Verify Models</h3>
+              <div class="code-block rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-slate-300"><span class="text-slate-500"># Check model files exist</span>
+<span class="text-cyan-400">ls</span> -la models/
+
+<span class="text-slate-500"># Expected output:</span>
+<span class="text-slate-500"># acne.pt, acne_scars.pt, dark_circles.pt, eyebags.pt, wrinkles.pt</span></code></pre>
+              </div>
+            </div>
+
+            <!-- Configure Firewall -->
+            <div id="configure-firewall" class="section-card rounded-2xl p-6 scroll-mt-24">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm font-bold">9</span>
+                <h2 class="text-xl font-semibold text-white">Configure Instance Firewall</h2>
+              </div>
+
+              <div class="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 mb-6">
+                <h4 class="text-sm font-medium text-amber-400 mb-2 flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  Two Firewall Layers
+                </h4>
+                <p class="text-sm text-slate-400">Oracle Cloud has <span class="text-white">two firewall layers</span>: <span class="text-cyan-400">Security List</span> (cloud level - done in Step 4) and <span class="text-emerald-400">firewalld</span> (OS-level - do now).</p>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Open Port 8000 in firewalld</h3>
+              <div class="code-block rounded-xl bg-slate-900 border border-slate-800 overflow-hidden mb-6">
+                <div class="flex items-center justify-between px-4 py-2 bg-slate-800/50 border-b border-slate-700/50">
+                  <span class="text-xs text-slate-400 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    Bash (on Oracle Linux)
+                  </span>
+                </div>
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-slate-300"><span class="text-slate-500"># Check firewall status</span>
+<span class="text-cyan-400">sudo</span> systemctl status firewalld
+
+<span class="text-slate-500"># Open port 8000 permanently</span>
+<span class="text-cyan-400">sudo</span> firewall-cmd --permanent --add-port=<span class="text-amber-400">8000</span>/tcp
+
+<span class="text-slate-500"># Optional: Open ports 80 and 443 for future use</span>
+<span class="text-cyan-400">sudo</span> firewall-cmd --permanent --add-port=<span class="text-amber-400">80</span>/tcp
+<span class="text-cyan-400">sudo</span> firewall-cmd --permanent --add-port=<span class="text-amber-400">443</span>/tcp
+
+<span class="text-slate-500"># Reload firewall rules</span>
+<span class="text-cyan-400">sudo</span> firewall-cmd --reload
+
+<span class="text-slate-500"># Verify ports are open</span>
+<span class="text-cyan-400">sudo</span> firewall-cmd --list-ports</code></pre>
+              </div>
+
+              <div class="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                <h4 class="text-sm font-medium text-emerald-400 mb-2">Expected Output</h4>
+                <code class="text-sm text-slate-300 font-mono">8000/tcp 80/tcp 443/tcp</code>
+              </div>
+            </div>
+
+            <!-- Run Application -->
+            <div id="run-application" class="section-card rounded-2xl p-6 scroll-mt-24">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm font-bold">10</span>
+                <h2 class="text-xl font-semibold text-white">Run the Application</h2>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Test Run (Foreground)</h3>
+              <div class="code-block rounded-xl bg-slate-900 border border-slate-800 overflow-hidden mb-6">
+                <div class="flex items-center justify-between px-4 py-2 bg-slate-800/50 border-b border-slate-700/50">
+                  <span class="text-xs text-slate-400">Bash (on Oracle Linux)</span>
+                </div>
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-slate-300"><span class="text-slate-500"># Navigate to project and activate venv</span>
+<span class="text-cyan-400">cd</span> /home/opc/skin-analysis
+<span class="text-cyan-400">source</span> venv/bin/activate
+
+<span class="text-slate-500"># Run the application</span>
+<span class="text-cyan-400">python</span> app.py
+
+<span class="text-slate-500"># Or run with uvicorn directly</span>
+<span class="text-cyan-400">uvicorn</span> app:app --host 0.0.0.0 --port 8000</code></pre>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Expected Startup Output</h3>
+              <div class="code-block rounded-xl bg-slate-900 border border-slate-800 overflow-hidden mb-6">
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-slate-300"><span class="text-emerald-400">Loading models...</span>
+<span class="text-emerald-400">✓ Loaded acne.pt</span>
+<span class="text-emerald-400">✓ Loaded acne_scars.pt</span>
+<span class="text-emerald-400">✓ Loaded dark_circles.pt</span>
+<span class="text-emerald-400">✓ Loaded eyebags.pt</span>
+<span class="text-emerald-400">✓ Loaded wrinkles.pt</span>
+<span class="text-cyan-400">INFO</span>:     Uvicorn running on <span class="text-amber-400">http://0.0.0.0:8000</span></code></pre>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Run in Background (Quick Method)</h3>
+              <div class="code-block rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-slate-300"><span class="text-slate-500"># Run in background with nohup</span>
+<span class="text-cyan-400">cd</span> /home/opc/skin-analysis
+<span class="text-cyan-400">source</span> venv/bin/activate
+<span class="text-cyan-400">nohup</span> python app.py > app.log 2>&1 &
+
+<span class="text-slate-500"># Check if running</span>
+<span class="text-cyan-400">ps</span> aux | grep python
+
+<span class="text-slate-500"># View logs</span>
+<span class="text-cyan-400">tail</span> -f app.log</code></pre>
+              </div>
+            </div>
+
+            <!-- Systemd Service -->
+            <div id="systemd-service" class="section-card rounded-2xl p-6 scroll-mt-24">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm font-bold">11</span>
+                <h2 class="text-xl font-semibold text-white">Create Systemd Service (Production)</h2>
+              </div>
+
+              <div class="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 mb-6">
+                <h4 class="text-sm font-medium text-blue-400 mb-2 flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  Why Systemd?
+                </h4>
+                <p class="text-sm text-slate-400">Systemd ensures your app starts automatically on boot and restarts if it crashes.</p>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Create Service File</h3>
+              <div class="code-block rounded-xl bg-slate-900 border border-slate-800 overflow-hidden mb-6">
+                <div class="flex items-center justify-between px-4 py-2 bg-slate-800/50 border-b border-slate-700/50">
+                  <span class="text-xs text-slate-400">Bash (on Oracle Linux)</span>
+                </div>
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-slate-300"><span class="text-slate-500"># Create systemd service file</span>
+<span class="text-cyan-400">sudo</span> nano /etc/systemd/system/skin-analysis.service</code></pre>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Service File Content</h3>
+              <div class="code-block rounded-xl bg-slate-900 border border-slate-800 overflow-hidden mb-6">
+                <div class="flex items-center justify-between px-4 py-2 bg-slate-800/50 border-b border-slate-700/50">
+                  <span class="text-xs text-slate-400">skin-analysis.service</span>
+                </div>
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-slate-300"><span class="text-cyan-400">[Unit]</span>
+Description=Skin Analysis FastAPI Application
+After=network.target
+
+<span class="text-cyan-400">[Service]</span>
+Type=simple
+User=opc
+Group=opc
+WorkingDirectory=<span class="text-emerald-400">/home/opc/skin-analysis</span>
+Environment="PATH=/home/opc/skin-analysis/venv/bin"
+ExecStart=<span class="text-emerald-400">/home/opc/skin-analysis/venv/bin/python</span> app.py
+Restart=always
+RestartSec=10
+
+<span class="text-cyan-400">[Install]</span>
+WantedBy=multi-user.target</code></pre>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Enable and Start Service</h3>
+              <div class="code-block rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-slate-300"><span class="text-slate-500"># Reload systemd</span>
+<span class="text-cyan-400">sudo</span> systemctl daemon-reload
+
+<span class="text-slate-500"># Enable service to start on boot</span>
+<span class="text-cyan-400">sudo</span> systemctl enable skin-analysis
+
+<span class="text-slate-500"># Start the service</span>
+<span class="text-cyan-400">sudo</span> systemctl start skin-analysis
+
+<span class="text-slate-500"># Check status</span>
+<span class="text-cyan-400">sudo</span> systemctl status skin-analysis
+
+<span class="text-slate-500"># View logs</span>
+<span class="text-cyan-400">sudo</span> journalctl -u skin-analysis -f</code></pre>
+              </div>
+            </div>
+
+            <!-- Verify Deployment -->
+            <div id="verify-deployment" class="section-card rounded-2xl p-6 scroll-mt-24">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm font-bold">12</span>
+                <h2 class="text-xl font-semibold text-white">Verify Deployment</h2>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <h3 class="text-sm font-medium text-slate-300 mb-3">Test from Instance</h3>
+                  <div class="code-block rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
+                    <pre class="p-4 text-sm overflow-x-auto"><code class="text-slate-300"><span class="text-slate-500"># Test locally</span>
+<span class="text-cyan-400">curl</span> http://localhost:8000
+
+<span class="text-slate-500"># Check if port is listening</span>
+<span class="text-cyan-400">sudo</span> ss -tlnp | grep 8000</code></pre>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 class="text-sm font-medium text-slate-300 mb-3">Test from Browser</h3>
+                  <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                    <p class="text-sm text-slate-400 mb-3">Open in your browser:</p>
+                    <code class="text-lg font-mono text-cyan-400">http://YOUR_PUBLIC_IP:8000</code>
+                    <div class="mt-4 text-sm text-slate-400 space-y-1">
+                      <p>✓ Should see the Skin Analysis web interface</p>
+                      <p>✓ Upload an image to test analysis</p>
+                      <p>✓ Check browser console for errors</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mb-3">Test API Endpoint</h3>
+              <div class="code-block rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-slate-300"><span class="text-slate-500"># Test API docs (from any browser)</span>
+http://YOUR_PUBLIC_IP:8000/docs
+
+<span class="text-slate-500"># Test with curl (upload an image)</span>
+<span class="text-cyan-400">curl</span> -X POST "http://YOUR_PUBLIC_IP:8000/analyze" \
+  -H "accept: application/json" \
+  -H "Content-Type: multipart/form-data" \
+  -F "files=@test_image.jpg"</code></pre>
+              </div>
+            </div>
+
+            <!-- Troubleshooting -->
+            <div id="troubleshooting" class="section-card rounded-2xl p-6 scroll-mt-24">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm font-bold">13</span>
+                <h2 class="text-xl font-semibold text-white">Troubleshooting</h2>
+              </div>
+
+              <div class="space-y-4">
+                <div class="p-4 rounded-xl bg-red-500/5 border border-red-500/20">
+                  <h4 class="text-sm font-medium text-red-400 mb-2">Can't access the app from browser?</h4>
+                  <ul class="text-sm text-slate-400 space-y-1">
+                    <li>• Check Security List has port 8000 open (Step 4)</li>
+                    <li>• Verify firewalld has port 8000 open: <code class="px-1 rounded bg-slate-800 text-cyan-400">sudo firewall-cmd --list-ports</code></li>
+                    <li>• Confirm app is running: <code class="px-1 rounded bg-slate-800 text-cyan-400">sudo ss -tlnp | grep 8000</code></li>
+                    <li>• Check app logs: <code class="px-1 rounded bg-slate-800 text-cyan-400">sudo journalctl -u skin-analysis -n 50</code></li>
+                  </ul>
+                </div>
+
+                <div class="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
+                  <h4 class="text-sm font-medium text-amber-400 mb-2">Models not loading / Out of memory?</h4>
+                  <ul class="text-sm text-slate-400 space-y-1">
+                    <li>• Check available memory: <code class="px-1 rounded bg-slate-800 text-cyan-400">free -h</code></li>
+                    <li>• Add swap space (see Step 8)</li>
+                    <li>• Consider upgrading to a larger instance shape</li>
+                    <li>• Load fewer models or use smaller model variants</li>
+                  </ul>
+                </div>
+
+                <div class="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20">
+                  <h4 class="text-sm font-medium text-blue-400 mb-2">OpenCV / libGL errors?</h4>
+                  <ul class="text-sm text-slate-400 space-y-1">
+                    <li>• Install missing libraries: <code class="px-1 rounded bg-slate-800 text-cyan-400">sudo dnf install -y mesa-libGL</code></li>
+                    <li>• Use headless OpenCV: <code class="px-1 rounded bg-slate-800 text-cyan-400">pip install opencv-python-headless</code></li>
+                  </ul>
+                </div>
+
+                <div class="p-4 rounded-xl bg-purple-500/5 border border-purple-500/20">
+                  <h4 class="text-sm font-medium text-purple-400 mb-2">Service won't start?</h4>
+                  <ul class="text-sm text-slate-400 space-y-1">
+                    <li>• Check service status: <code class="px-1 rounded bg-slate-800 text-cyan-400">sudo systemctl status skin-analysis</code></li>
+                    <li>• View detailed logs: <code class="px-1 rounded bg-slate-800 text-cyan-400">sudo journalctl -u skin-analysis -e</code></li>
+                    <li>• Verify paths in service file are correct</li>
+                    <li>• Test running manually first before using systemd</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Production Tips -->
+            <div id="production-tips" class="section-card rounded-2xl p-6 scroll-mt-24">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm font-bold">14</span>
+                <h2 class="text-xl font-semibold text-white">Production Tips</h2>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
+                  <h4 class="text-sm font-medium text-emerald-400 mb-2">🔒 Security Hardening</h4>
+                  <ul class="text-sm text-slate-400 space-y-1">
+                    <li>• Set up SSL/TLS with Let's Encrypt</li>
+                    <li>• Use Nginx as reverse proxy</li>
+                    <li>• Configure fail2ban for SSH protection</li>
+                    <li>• Restrict CORS origins in app.py</li>
+                  </ul>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
+                  <h4 class="text-sm font-medium text-cyan-400 mb-2">🚀 Performance</h4>
+                  <ul class="text-sm text-slate-400 space-y-1">
+                    <li>• Use Gunicorn with multiple workers</li>
+                    <li>• Enable response caching</li>
+                    <li>• Optimize model loading (lazy load)</li>
+                    <li>• Use CDN for static files</li>
+                  </ul>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
+                  <h4 class="text-sm font-medium text-amber-400 mb-2">📊 Monitoring</h4>
+                  <ul class="text-sm text-slate-400 space-y-1">
+                    <li>• Set up log rotation</li>
+                    <li>• Configure Oracle Cloud monitoring</li>
+                    <li>• Add health check endpoint</li>
+                    <li>• Set up alerts for downtime</li>
+                  </ul>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
+                  <h4 class="text-sm font-medium text-purple-400 mb-2">🌐 Domain Setup</h4>
+                  <ul class="text-sm text-slate-400 space-y-1">
+                    <li>• Reserve a static public IP</li>
+                    <li>• Configure DNS A record</li>
+                    <li>• Set up SSL certificate</li>
+                    <li>• Configure Nginx for domain</li>
+                  </ul>
+                </div>
+              </div>
+
+              <h3 class="text-sm font-medium text-slate-300 mt-6 mb-3">Nginx Reverse Proxy (Optional)</h3>
+              <div class="code-block rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
+                <div class="flex items-center justify-between px-4 py-2 bg-slate-800/50 border-b border-slate-700/50">
+                  <span class="text-xs text-slate-400">Bash (on Oracle Linux)</span>
+                </div>
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-slate-300"><span class="text-slate-500"># Install Nginx</span>
+<span class="text-cyan-400">sudo</span> dnf install -y nginx
+
+<span class="text-slate-500"># Create config</span>
+<span class="text-cyan-400">sudo</span> nano /etc/nginx/conf.d/skin-analysis.conf
+
+<span class="text-slate-500"># Add this configuration:</span>
+server {
+    listen 80;
+    server_name YOUR_DOMAIN_OR_IP;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+
+<span class="text-slate-500"># Start Nginx</span>
+<span class="text-cyan-400">sudo</span> systemctl enable nginx
+<span class="text-cyan-400">sudo</span> systemctl start nginx</code></pre>
+              </div>
+            </div>
+
+            <!-- Quick Reference -->
+            <div class="section-card rounded-2xl p-6 scroll-mt-24">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm font-bold">📋</span>
+                <h2 class="text-xl font-semibold text-white">Quick Reference Commands</h2>
+              </div>
+
+              <div class="overflow-x-auto rounded-xl border border-slate-700/50">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="bg-slate-800/50">
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Task</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Command</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-700/30">
+                    <tr><td class="px-4 py-3 text-slate-300">Start service</td><td class="px-4 py-3 font-mono text-emerald-400">sudo systemctl start skin-analysis</td></tr>
+                    <tr><td class="px-4 py-3 text-slate-300">Stop service</td><td class="px-4 py-3 font-mono text-emerald-400">sudo systemctl stop skin-analysis</td></tr>
+                    <tr><td class="px-4 py-3 text-slate-300">Restart service</td><td class="px-4 py-3 font-mono text-emerald-400">sudo systemctl restart skin-analysis</td></tr>
+                    <tr><td class="px-4 py-3 text-slate-300">View status</td><td class="px-4 py-3 font-mono text-emerald-400">sudo systemctl status skin-analysis</td></tr>
+                    <tr><td class="px-4 py-3 text-slate-300">View logs</td><td class="px-4 py-3 font-mono text-emerald-400">sudo journalctl -u skin-analysis -f</td></tr>
+                    <tr><td class="px-4 py-3 text-slate-300">Check ports</td><td class="px-4 py-3 font-mono text-emerald-400">sudo ss -tlnp | grep 8000</td></tr>
+                    <tr><td class="px-4 py-3 text-slate-300">Check firewall</td><td class="px-4 py-3 font-mono text-emerald-400">sudo firewall-cmd --list-ports</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Key Takeaways -->
+            <div class="section-card rounded-2xl p-6 scroll-mt-24">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm font-bold">✨</span>
+                <h2 class="text-xl font-semibold text-white">Key Takeaways</h2>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex items-start gap-3 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                  <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 text-lg">🔐</span>
+                  <div>
+                    <h4 class="text-sm font-medium text-white mb-1">Two Firewall Layers</h4>
+                    <p class="text-xs text-slate-400">Configure both Security List (OCI) and firewalld (OS)</p>
+                  </div>
+                </div>
+
+                <div class="flex items-start gap-3 p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/20">
+                  <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 text-lg">🐍</span>
+                  <div>
+                    <h4 class="text-sm font-medium text-white mb-1">Virtual Environment</h4>
+                    <p class="text-xs text-slate-400">Always use venv to isolate Python dependencies</p>
+                  </div>
+                </div>
+
+                <div class="flex items-start gap-3 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
+                  <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 text-lg">⚙️</span>
+                  <div>
+                    <h4 class="text-sm font-medium text-white mb-1">Systemd for Production</h4>
+                    <p class="text-xs text-slate-400">Use systemd service for auto-restart and boot startup</p>
+                  </div>
+                </div>
+
+                <div class="flex items-start gap-3 p-4 rounded-xl bg-purple-500/5 border border-purple-500/20">
+                  <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 text-lg">💾</span>
+                  <div>
+                    <h4 class="text-sm font-medium text-white mb-1">Memory Matters</h4>
+                    <p class="text-xs text-slate-400">YOLO models need RAM - add swap or upgrade instance</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </article>
+        </section>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/50 mt-12">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p class="text-sm text-slate-500">
+            Skin Analysis App - Oracle Cloud Deployment Guide • Last updated January 11, 2026
+          </p>
+          <div class="flex items-center gap-4">
+            <span class="text-xs text-slate-600">FastAPI + YOLO</span>
+            <span class="text-xs text-slate-600">•</span>
+            <span class="text-xs text-slate-600">Port 8000</span>
+            <span class="text-xs text-slate-600">•</span>
+            <span class="inline-flex items-center gap-1 text-xs text-emerald-500">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              Ready to Deploy
+            </span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Highlight active nav link on scroll
+    const sections = document.querySelectorAll('[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+    
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        if (scrollY >= sectionTop - 100) {
+          current = section.getAttribute('id');
+        }
+      });
+      
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+          link.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

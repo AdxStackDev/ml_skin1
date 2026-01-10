@@ -51,7 +51,7 @@ venv.bak/
 .env.*.local
 
 # Uploaded files and outputs
-uploads/
+# uploads/
 *.jpg
 *.jpeg
 *.png

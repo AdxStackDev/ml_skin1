@@ -3,7 +3,7 @@ import json
 import os
 
 model_files = ['acne.pt', 'acne_scars.pt', 'dark_circles.pt', 'eyebags.pt', 'wrinkles.pt']
-image_path = 'check.jpg'
+image_path = 'girl.jpg'
 
 results = {}
 all_detections = []
