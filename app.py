@@ -21,14 +21,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Create directories first
+upload_dir = "uploads"
+os.makedirs(upload_dir, exist_ok=True)
+
 # Serve uploads and static files
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 model_files = ['acne.pt', 'acne_scars.pt', 'dark_circles.pt', 'eyebags.pt', 'wrinkles.pt']
 models = {}
-upload_dir = "uploads"
-os.makedirs(upload_dir, exist_ok=True)
 
 # Load models
 print("Loading models...")
