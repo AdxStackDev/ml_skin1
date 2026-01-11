@@ -2,6 +2,16 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+import torch
+# Configure torch to allow loading YOLO models
+torch.serialization.add_safe_globals([
+    'ultralytics.nn.tasks.DetectionModel',
+    'ultralytics.nn.modules.head.Detect', 
+    'ultralytics.nn.modules.conv.Conv',
+    'ultralytics.nn.modules.block.C2f',
+    'ultralytics.nn.modules.block.Bottleneck',
+    'ultralytics.nn.modules.block.SPPF'
+])
 from ultralytics import YOLO
 import json
 import os
@@ -37,8 +47,11 @@ print("Loading models...")
 for model_file in model_files:
     model_path = os.path.join('models', model_file)
     if os.path.exists(model_path):
-        models[model_file] = YOLO(model_path)
-        print(f"✓ Loaded {model_file}")
+        try:
+            models[model_file] = YOLO(model_path)
+            print(f"✓ Loaded {model_file}")
+        except Exception as e:
+            print(f"❌ Failed to load {model_file}: {str(e)}")
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
