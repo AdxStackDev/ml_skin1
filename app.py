@@ -3,15 +3,19 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import torch
-# Configure torch to allow loading YOLO models
-torch.serialization.add_safe_globals([
-    'ultralytics.nn.tasks.DetectionModel',
-    'ultralytics.nn.modules.head.Detect', 
-    'ultralytics.nn.modules.conv.Conv',
-    'ultralytics.nn.modules.block.C2f',
-    'ultralytics.nn.modules.block.Bottleneck',
-    'ultralytics.nn.modules.block.SPPF'
-])
+# Fix PyTorch 2.6+ model loading security restrictions
+try:
+    torch.serialization.add_safe_globals([
+        'ultralytics.nn.tasks.DetectionModel',
+        'ultralytics.nn.modules.head.Detect',
+        'ultralytics.nn.modules.conv.Conv',
+        'ultralytics.nn.modules.block.C2f',
+        'ultralytics.nn.modules.block.Bottleneck',
+        'ultralytics.nn.modules.block.SPPF'
+    ])
+except AttributeError:
+    # Fallback for different PyTorch versions
+    pass
 from ultralytics import YOLO
 import json
 import os
